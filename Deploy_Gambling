@@ -1,0 +1,32 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract SimpleDiceGame {
+    address public owner;
+    uint256 public betAmount;
+
+    event BetPlaced(address indexed player, uint256 betAmount, uint256 chosenNumber, uint256 result);
+
+    constructor(uint256 _betAmount) {
+        owner = msg.sender;
+        betAmount = _betAmount;
+    }
+
+    function play(uint256 chosenNumber) external payable {
+        require(msg.value == betAmount, "Incorrect bet amount");
+
+        uint256 randomNumber = uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty))) % 6 + 1;
+        bool win = (chosenNumber == randomNumber);
+
+        if (win) {
+            payable(msg.sender).transfer(betAmount * 2);
+        }
+
+        emit BetPlaced(msg.sender, betAmount, chosenNumber, randomNumber);
+    }
+
+    function withdraw() external {
+        require(msg.sender == owner, "Only owner can withdraw");
+        payable(msg.sender).transfer(address(this).balance);
+    }
+}
